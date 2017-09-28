@@ -1,0 +1,13 @@
+[Unit]
+Description=eShopOnWeb .NET Core Sample
+
+[Service]
+WorkingDirectory={{ eshop_path + '/src/Web' }}
+ExecStart=/usr/bin/dotnet run
+Restart=always
+RestartSec=10  # Restart service after 10 seconds if dotnet service crashes
+SyslogIdentifier=eshop
+User={{ eshop_user }}
+
+[Install]
+WantedBy=multi-user.target

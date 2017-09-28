@@ -1,0 +1,14 @@
+[all:vars]
+admin_username=mdavis
+admin_password=password123!
+ansible_become_password={{admin_password}}
+
+[webservers:children]
+vmtype_webserver
+
+[vmtype_webserver]
+
+[webservers:vars]
+ansible_user={{ admin_username }}
+ansible_password={{ admin_password }}
+

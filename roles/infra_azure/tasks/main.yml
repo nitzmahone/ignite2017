@@ -1,0 +1,55 @@
+- azure_rm_resourcegroup:
+    location: westus
+    name: "{{ rg_name }}"
+
+- azure_rm_virtualnetwork:
+    resource_group: "{{ rg_name }}"
+    name: vnet
+    address_prefixes_cidr:
+    - 10.10.0.0/16
+
+- azure_rm_subnet:
+    resource_group: "{{ rg_name }}"
+    virtual_network_name: vnet
+    name: main
+    address_prefix_cidr: 10.10.10.0/24
+
+- name: ensure VMs are provisioned
+  azure_rm_virtualmachine:
+    resource_group: "{{ rg_name }}"
+    name: "{{ item.name }}"
+    admin_username: "{{ admin_username }}"
+    admin_password: "{{ admin_password }}"
+    image:
+      publisher: RedHat
+      offer: RHEL
+      sku: 7.3
+      version: latest
+    managed_disk_type: Premium_LRS
+    virtual_network_name: vnet
+    subnet_name: main
+    open_ports: [22, 80, 5106]
+    tags: "{{ item.tags }}"
+    vm_size: Standard_DS2_v2
+  register: vm_async
+  async: 600
+  poll: 0
+  with_items:
+    - name: host1
+      tags:
+        vmtype: webserver
+    - name: host2
+      tags:
+        vmtype: webserver
+
+- async_status:
+    jid: "{{ item.ansible_job_id }}"
+  until: vm_out.finished
+  retries: 120
+  delay: 5
+  register: vm_out
+  with_items: "{{ vm_async.results }}"
+
+- name: refresh inventory if any new VMs were created
+  meta: refresh_inventory
+  when: vm_out.results | select('changed') | length > 0

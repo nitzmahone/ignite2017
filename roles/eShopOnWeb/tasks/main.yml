@@ -1,0 +1,59 @@
+- name: ensure git is present
+  become: yes
+  yum:
+    name: git
+
+- name: ensure service user is present
+  become: yes
+  user:
+    name: "{{ eshop_user }}"
+
+- name: ensure eshop path exists
+  become: yes
+  file:
+    path: "{{ eshop_path }}"
+    owner: "{{ eshop_user }}"
+    state: directory
+
+- name: ensure current clone of eShopOnWeb repo is present
+  become: yes
+  git:
+    repo: https://github.com/dotnet-architecture/eShopOnWeb.git
+    dest: "{{ eshop_path }}"
+    version: netcore2.0
+
+- name: ensure service account owns eshop app dir
+  become: yes
+  file:
+    path: "{{ eshop_path }}"
+    owner: "{{ eshop_user }}"
+    recurse: yes
+
+- name: ensure aspnet packages are restored
+  become: yes
+  become_user: eshop
+  shell: dotnet restore
+  args:
+    chdir: "{{ eshop_path }}"
+
+- name: ensure eshop service definition exists
+  become: yes
+  template:
+    src: eshoponweb.service.j2
+    dest: /etc/systemd/system/eshop.service
+
+- name: ensure service is started and enabled
+  become: yes
+  systemd:
+    name: eshop
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: ensure firewall port is open
+  become: yes
+  firewalld:
+    port: 5106/tcp
+    immediate: yes
+    permanent: true
+    state: enabled

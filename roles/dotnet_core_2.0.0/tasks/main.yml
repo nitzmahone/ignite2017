@@ -1,0 +1,24 @@
+- rpm_key:
+    key: https://packages.microsoft.com/keys/microsoft.asc
+
+- name: ensure dotnet repos are available
+  become: yes
+  yum_repository:
+    name: packages-microsoft-com-prod
+    baseurl: https://packages.microsoft.com/yumrepos/microsoft-rhel7.3-prod
+    gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+    description: Microsoft RHEL7.3 repo
+
+- name: ensure dotnet prereqs are present
+  become: yes
+  yum:
+    name:
+    - libunwind
+    - libicu
+
+- name: ensure dotnet sdk is present
+  become: yes
+  yum:
+    name:
+    - dotnet-sdk-2.0.0
+

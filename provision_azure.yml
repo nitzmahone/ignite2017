@@ -1,0 +1,12 @@
+- hosts: localhost
+  roles:
+  - role: infra_azure
+    vars:
+      rg_name: mdavis-ignite2017
+
+
+- hosts: webservers
+  roles:
+  - role: dotnet_core_2.0.0
+  - role: eShopOnWeb
+
