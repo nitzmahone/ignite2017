@@ -86,7 +86,7 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 
-APPLY_ARGS = ('apply', '-auto-approve', 'true')
+APPLY_ARGS = ('apply', '-auto-approve=true')
 
 def preflight_validation(module, bin_path, project_path, variables_file=None, plan_file=None):
     if not os.path.exists(bin_path):
@@ -103,17 +103,21 @@ def build_plan(module, bin_path, project_path, variables_args):
     #TODO - for right now just require a plan file
     _, plan_path = tempfile.mkstemp(suffix='.tfplan')
 
-    rc, out, err = module.run_command([bin_path, 'plan', '-out', plan_path] + variables_args, cwd=project_path)
+    rc, out, err = module.run_command([bin_path, 'plan', '-detailed-exitcode', '-out', plan_path] + variables_args, cwd=project_path)
 
     if rc == 0:
-        return plan_path, True
-    return plan_path, False
+        return plan_path, True, False
+    elif rc == 2:
+        return plan_path, True, True
+
+    raise Exception("Failed building plan. rc: {} stdout: {} stderr: {}".format(rc,out,err))
+    #return plan_path, False, False
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            service_path=dict(required=True, type='path'),
+            project_path=dict(required=True, type='path'),
             binary_path=dict(type='path'),
             state=dict(default='present', choices=['present', 'absent', 'latest']),
             variables=dict(type='json'),
@@ -123,7 +127,7 @@ def main():
         ),
     )
 
-    project_path = module.params.get('service_path')
+    project_path = module.params.get('project_path')
     bin_path = module.params.get('binary_path')
     state = module.params.get('state')
     variables = module.params.get('variables')
@@ -139,34 +143,36 @@ def main():
     preflight_validation(module, command[0], project_path)
 
     variables_args = []
-    for k, v in variables.items():
-        variables_args.extend([
-            '-var',
-            '{}={}'.format(variables)
-        ])
+    if variables:
+        for k, v in variables.items():
+            variables_args.extend([
+                '-var',
+                '{}={}'.format(variables)
+            ])
     if variables_file:
         variables_args.append('-var-file', variables_file)
-
 
     command.extend(APPLY_ARGS)
 
     if plan_file and os.path.exists('plan_file'):
         command.append(plan_file)
     else:
-        plan_file, success = build_plan(module, command[0], project_path, variables_args)
+        plan_file, success, changed = build_plan(module, command[0], project_path, variables_args)
         command.append(plan_file)
+
+    if not changed:
+        module.exit_json(changed=False)
 
     rc, out, err = module.run_command(command, cwd=project_path)
     if rc != 0:
         if state == 'absent' and "-{}' does not exist".format(stage) in out:
             module.exit_json(changed=False, state='absent', command=command,
-                    out=out, service_name=get_service_name(module, stage))
+                    out=out)
 
-        module.fail_json(msg="Failure when executing Serverless command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err))
+        module.fail_json(msg="Failure when executing terraform command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err))
 
     # gather some facts about the deployment
-    module.exit_json(changed=True, state='present', out=out, command=command,
-            service_name=get_service_name(module, stage))
+    module.exit_json(changed=True, state='present', out=out, command=command)
 
 
 if __name__ == '__main__':

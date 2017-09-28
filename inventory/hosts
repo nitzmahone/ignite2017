@@ -5,8 +5,11 @@ ansible_become_password={{admin_password}}
 
 [webservers:children]
 vmtype_webserver
+vmtype_webserverTF
 
 [vmtype_webserver]
+
+[vmtype_webserverTF]
 
 [webservers:vars]
 ansible_user={{ admin_username }}

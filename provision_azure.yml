@@ -1,12 +1,14 @@
 - hosts: localhost
+  gather_facts: no
   roles:
   - role: infra_azure
     vars:
       rg_name: mdavis-ignite2017
 
-
-- hosts: webservers
+- hosts: vmtype_webserver
   roles:
-  - role: dotnet_core_2.0.0
   - role: eShopOnWeb
 
+  tasks:
+  - debug:
+      msg: 'Host endpoint http://{{ ansible_host }}:5106/'

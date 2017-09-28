@@ -1,0 +1,12 @@
+- hosts: localhost
+  gather_facts: no
+  roles:
+  - infra_terraform
+
+- hosts: vmtype_webserverTF
+  roles:
+  - eShopOnWeb
+
+  tasks:
+  - debug:
+      msg: 'Host endpoint http://{{ ansible_host }}:5106/'

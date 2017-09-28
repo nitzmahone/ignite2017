@@ -1,0 +1,22 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - azure_rm_resourcegroup:
+      name: "{{ item }}"
+      state: absent
+      force: yes
+    async: 600
+    poll: 0
+    with_items:
+    - mdavis-ignite2017
+    - mdavis-ignite2017TF
+    register: rgasync
+
+  - async_status:
+      jid: "{{ item.ansible_job_id }}"
+    with_items: "{{ rgasync.results }}"
+    until: rgout.finished == 1
+    retries: 300
+    delay: 2
+    register: rgout
+

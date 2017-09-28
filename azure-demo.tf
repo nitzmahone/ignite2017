@@ -17,6 +17,13 @@ resource "azurerm_subnet" "test" {
   address_prefix       = "10.10.10.0/24"
 }
 
+resource "azurerm_public_ip" "test" {
+  name = "vm01pip"
+  location = "West US"
+  resource_group_name = "${azurerm_resource_group.test.name}"
+  public_ip_address_allocation = "dynamic"
+}
+
 resource "azurerm_network_interface" "test" {
   name                = "host101"
   location            = "${azurerm_resource_group.test.location}"
@@ -26,6 +33,7 @@ resource "azurerm_network_interface" "test" {
     name                          = "default"
     subnet_id                     = "${azurerm_subnet.test.id}"
     private_ip_address_allocation = "dynamic"
+    public_ip_address_id = "${azurerm_public_ip.test.id}"
   }
 }
 
@@ -64,5 +72,7 @@ resource "azurerm_virtual_machine" "test" {
 
   tags {
     vmtype = "webserverTF"
+    newtag = "blar"
   }
+
 }

@@ -1,0 +1,6 @@
+- terraform:
+    project_path: /home/mdavis/ignite2017
+  register: tfout
+
+- meta: refresh_inventory
+  when: tfout | changed
