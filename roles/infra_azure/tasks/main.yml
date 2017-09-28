@@ -41,6 +41,7 @@
     - name: host2
       tags:
         vmtype: webserver
+  changed_when: false
 
 - async_status:
     jid: "{{ item.ansible_job_id }}"

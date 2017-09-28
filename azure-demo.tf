@@ -38,7 +38,7 @@ resource "azurerm_network_interface" "test" {
 }
 
 resource "azurerm_virtual_machine" "test" {
-  name                  = "host1"
+  name                  = "host1TF"
   location              = "${azurerm_resource_group.test.location}"
   resource_group_name   = "${azurerm_resource_group.test.name}"
   network_interface_ids = ["${azurerm_network_interface.test.id}"]
@@ -72,7 +72,6 @@ resource "azurerm_virtual_machine" "test" {
 
   tags {
     vmtype = "webserverTF"
-    newtag = "blar"
   }
 
 }

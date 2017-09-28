@@ -57,3 +57,12 @@
     immediate: yes
     permanent: true
     state: enabled
+
+- name: ensure service is answering
+  uri:
+    url: 'http://{{ ansible_host }}:5106/'
+    return_content: yes
+  register: uriout
+  until: uriout.status == 200 and uriout.content | search("Catalog - Microsoft.eShopOnWeb")
+  retries: 60
+  delay: 1
